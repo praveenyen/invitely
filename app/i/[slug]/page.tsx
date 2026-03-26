@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getInvitation } from "@/app/actions/invitation";
 import CardView from "@/components/card/CardView";
+import ViewTracker from "@/components/ViewTracker";
 
 function formatDate(dateStr: string) {
   if (!dateStr) return "";
@@ -53,14 +54,7 @@ export async function generateMetadata({
       siteName: "Invitely",
       url: `${siteUrl}/i/${slug}`,
       ...(data.cardImageUrl && {
-        images: [
-          {
-            url: data.cardImageUrl,
-            width: 1200,
-            height: 630,
-            alt: title,
-          },
-        ],
+        images: [{ url: data.cardImageUrl, width: 1200, height: 630, alt: title }],
       }),
     },
     twitter: {
@@ -82,5 +76,10 @@ export default async function InvitationPage({
 
   if (!data) notFound();
 
-  return <CardView data={data} />;
+  return (
+    <>
+      <ViewTracker slug={slug} />
+      <CardView data={data} slug={slug} />
+    </>
+  );
 }

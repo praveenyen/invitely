@@ -55,6 +55,7 @@ interface FormData {
   message: string;
   religion: ReligionType;
   contacts: Contact[];
+  pin: string;
 }
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
@@ -82,6 +83,7 @@ const steps = [
   { label: "Details", desc: "Tell us about the event" },
   { label: "Culture", desc: "Select your tradition" },
   { label: "Contacts", desc: "Who's helping your guests?" },
+  { label: "Secure", desc: "Set a PIN to manage your invite" },
 ];
 
 function getNameConfig(occasion: OccasionType) {
@@ -514,6 +516,48 @@ function StepContacts({
   );
 }
 
+// ─── Step 5 — PIN ────────────────────────────────────────────────────────────
+
+function StepPin({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-6">
+      <div>
+        <h2 className="font-display text-2xl font-bold text-foreground">
+          Secure your invite
+        </h2>
+        <p className="text-muted-foreground text-sm mt-1">
+          Set a 4-digit PIN to view stats and edit your invitation later
+        </p>
+      </div>
+      <div className="flex flex-col items-center gap-4 mt-2">
+        <input
+          type="tel"
+          inputMode="numeric"
+          maxLength={4}
+          placeholder="0000"
+          value={value}
+          onChange={(e) => {
+            const v = e.target.value.replace(/\D/g, "").slice(0, 4);
+            onChange(v);
+          }}
+          className="text-center text-4xl font-bold tracking-[0.6em] w-52 rounded-2xl border-2 border-border bg-card py-4 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/30 transition-all text-foreground placeholder:text-muted-foreground/30"
+        />
+        <p className="text-xs text-muted-foreground text-center max-w-xs">
+          Remember this PIN — you&apos;ll need it to view stats, edit details, and
+          access your dashboard at{" "}
+          <span className="font-medium text-foreground">/i/your-link/stats</span>
+        </p>
+      </div>
+    </div>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 const slideVariants = {
@@ -541,6 +585,7 @@ export default function CreatePage() {
     message: "",
     religion: "",
     contacts: [],
+    pin: "",
   });
 
   const updateField = (k: keyof FormData, v: string) =>
@@ -562,6 +607,7 @@ export default function CreatePage() {
     if (step === 0) return !!form.occasion;
     if (step === 1) return !!form.title && !!form.brideName && !!form.date && !!form.venue;
     if (step === 2) return !!form.religion;
+    if (step === 4) return /^\d{4}$/.test(form.pin);
     return true;
   };
 
@@ -595,9 +641,21 @@ export default function CreatePage() {
       cardImageUrl = urlData.publicUrl;
     }
 
-    const payload = { ...form, cardImageUrl };
+    const payload = {
+      occasion: form.occasion,
+      title: form.title,
+      brideName: form.brideName,
+      groomName: form.groomName,
+      date: form.date,
+      time: form.time,
+      venue: form.venue,
+      message: form.message,
+      religion: form.religion,
+      contacts: form.contacts,
+      cardImageUrl,
+    };
     localStorage.setItem(INVITATION_STORAGE_KEY, JSON.stringify(payload));
-    const result = await saveInvitation(payload);
+    const result = await saveInvitation(payload, form.pin);
     setSaving(false);
 
     if ("error" in result) {
@@ -685,6 +743,12 @@ export default function CreatePage() {
               <StepContacts
                 contacts={form.contacts}
                 onChange={(c) => setForm((f) => ({ ...f, contacts: c }))}
+              />
+            )}
+            {step === 4 && (
+              <StepPin
+                value={form.pin}
+                onChange={(v) => updateField("pin", v)}
               />
             )}
           </motion.div>

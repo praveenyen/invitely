@@ -14,18 +14,30 @@ create table public.invitations (
   message        text,
   religion       text,
   contacts       jsonb       default '[]'::jsonb,
+  pin            text,
+  view_count     integer     default 0,
   created_at     timestamptz default now()
 );
 
 -- Enable Row Level Security
 alter table public.invitations enable row level security;
 
--- Allow anyone to read invitations (public sharing)
 create policy "Public read"
   on public.invitations for select
   using (true);
 
--- Allow anyone to create invitations
 create policy "Public insert"
   on public.invitations for insert
   with check (true);
+
+create policy "Public update"
+  on public.invitations for update
+  using (true);
+
+-- Atomic view count increment
+create or replace function increment_view_count(slug_param text)
+returns void language sql as $$
+  update public.invitations
+  set view_count = view_count + 1
+  where slug = slug_param;
+$$;
