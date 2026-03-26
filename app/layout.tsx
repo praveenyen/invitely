@@ -17,9 +17,26 @@ const dmSerifDisplay = DM_Serif_Display({
 });
 
 export const metadata: Metadata = {
-  title: "Invitely — Beautiful Digital Invitations",
+  title: {
+    default: "Invitely — Beautiful Digital Invitations",
+    template: "%s",
+  },
   description:
-    "Create stunning digital invitations for birthdays, weddings, and anniversaries. Pick a template, personalize it, share a link.",
+    "Create stunning digital invitations for weddings, birthdays, engagements & anniversaries. Personalise and share a beautiful link in minutes.",
+  metadataBase: new URL("https://invitely.app"),
+  openGraph: {
+    type: "website",
+    siteName: "Invitely",
+    title: "Invitely — Beautiful Digital Invitations",
+    description:
+      "Create stunning digital invitations for weddings, birthdays, engagements & anniversaries. Personalise and share a beautiful link in minutes.",
+  },
+  twitter: {
+    card: "summary",
+    title: "Invitely — Beautiful Digital Invitations",
+    description:
+      "Create stunning digital invitations and share a beautiful link in minutes.",
+  },
 };
 
 export default function RootLayout({
