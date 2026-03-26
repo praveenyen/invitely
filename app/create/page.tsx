@@ -3,6 +3,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { INVITATION_STORAGE_KEY } from "@/types/invitation";
+import { saveInvitation } from "@/app/actions/invitation";
 import {
   ArrowLeft,
   ArrowRight,
@@ -417,6 +418,8 @@ const slideVariants = {
 export default function CreatePage() {
   const router = useRouter();
   const [step, setStep] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [dir, setDir] = useState(1);
   const [form, setForm] = useState<FormData>({
     occasion: "",
@@ -526,18 +529,31 @@ export default function CreatePage() {
       {/* Footer CTA */}
       <div className="px-5 pb-8 pt-2 border-t border-border bg-background">
         <button
-          disabled={!canNext()}
-          onClick={() => {
+          disabled={!canNext() || saving}
+          onClick={async () => {
             if (step < steps.length - 1) {
               go(step + 1);
             } else {
+              setSaving(true);
+              setSaveError("");
               localStorage.setItem(INVITATION_STORAGE_KEY, JSON.stringify(form));
-              router.push("/card");
+              const result = await saveInvitation(form);
+              setSaving(false);
+              if ("error" in result) {
+                setSaveError(result.error);
+              } else {
+                router.push(`/i/${result.slug}`);
+              }
             }
           }}
           className="w-full flex items-center justify-center gap-2 rounded-2xl py-4 font-medium text-primary-foreground gradient-gold shadow-card disabled:opacity-40 disabled:cursor-not-allowed transition-opacity hover:opacity-90 active:scale-[0.98]"
         >
-          {step < steps.length - 1 ? (
+          {saving ? (
+            <>
+              <div className="h-4 w-4 rounded-full border-2 border-primary-foreground border-t-transparent animate-spin" />
+              Creating…
+            </>
+          ) : step < steps.length - 1 ? (
             <>
               Continue
               <ArrowRight className="h-4 w-4" />
@@ -549,6 +565,9 @@ export default function CreatePage() {
             </>
           )}
         </button>
+        {saveError && (
+          <p className="text-xs text-destructive text-center mt-2">{saveError}</p>
+        )}
       </div>
     </div>
   );

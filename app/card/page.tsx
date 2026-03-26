@@ -2,12 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { InvitationData, INVITATION_STORAGE_KEY } from "@/types/invitation";
-import HeroSection from "@/components/card/HeroSection";
-import StickyHeader from "@/components/card/StickyHeader";
-import EventSection from "@/components/card/EventSection";
-import VenueSection from "@/components/card/VenueSection";
-import ContactsSection from "@/components/card/ContactsSection";
-import CardFooter from "@/components/card/CardFooter";
+import CardView from "@/components/card/CardView";
 
 export default function CardPage() {
   const router = useRouter();
@@ -41,14 +36,5 @@ export default function CardPage() {
     );
   }
 
-  return (
-    <main className="min-h-screen" style={{ background: "hsl(36 30% 95%)" }}>
-      <StickyHeader data={data} />
-      <HeroSection data={data} />
-      <EventSection data={data} />
-      <VenueSection data={data} />
-      <ContactsSection contacts={data.contacts} />
-      <CardFooter data={data} />
-    </main>
-  );
+  return <CardView data={data} />;
 }
