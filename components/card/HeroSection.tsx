@@ -25,16 +25,10 @@ function formatDate(dateStr: string) {
   });
 }
 
-function splitNames(hostNames: string) {
-  const parts = hostNames.split(/[&,]/).map((s) => s.trim());
-  if (parts.length >= 2)
-    return { bride: parts[0], groom: parts.slice(1).join(" & ") };
-  return { bride: hostNames, groom: "" };
-}
-
 export default function HeroSection({ data }: { data: InvitationData }) {
   const blessing = blessingByReligion[data.religion] ?? "";
-  const { bride, groom } = splitNames(data.hostNames || data.title);
+  const bride = data.brideName || data.title;
+  const groom = data.groomName;
 
   return (
     <section className="relative min-h-screen flex flex-col items-center overflow-hidden bg-[hsl(36_30%_95%)]">
@@ -94,22 +88,20 @@ export default function HeroSection({ data }: { data: InvitationData }) {
 
       {/* ── Main center: Names+Hands with Bride & Groom flanking ── */}
       <div className="relative flex-1 flex items-center justify-center w-full z-10">
-
         {/* Center: mandala bg + stacked names + hands */}
         <div className="relative flex flex-col items-center justify-center min-h-[340px] md:min-h-[520px] w-full max-w-xs md:max-w-3xl px-[90px] sm:px-[110px] md:px-[220px]">
-
           {/* Bride figure — absolute left */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.9, delay: 0.5 }}
-            className="absolute left-0 bottom-0 w-[90px] h-[220px] sm:w-[110px] sm:h-[260px] md:w-[200px] md:h-[480px]"
+            className="absolute left-0 top-1/2 -translate-y-1/2 w-[90px] h-[220px] sm:w-[110px] sm:h-[260px] md:w-[200px] md:h-[480px]"
           >
             <Image
               src="/bride.webp"
               alt="Bride"
               fill
-              className="object-contain object-bottom drop-shadow-xl"
+              className="object-contain object-center drop-shadow-xl"
             />
           </motion.div>
 
@@ -118,13 +110,13 @@ export default function HeroSection({ data }: { data: InvitationData }) {
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.9, delay: 0.5 }}
-            className="absolute right-0 bottom-0 w-[90px] h-[220px] sm:w-[110px] sm:h-[260px] md:w-[200px] md:h-[480px]"
+            className="absolute right-0 top-1/2 -translate-y-1/2 w-[90px] h-[220px] sm:w-[110px] sm:h-[260px] md:w-[200px] md:h-[480px]"
           >
             <Image
               src="/groom.webp"
               alt="Groom"
               fill
-              className="object-contain object-bottom drop-shadow-xl"
+              className="object-contain object-center drop-shadow-xl"
             />
           </motion.div>
           {/* Mandala background */}
@@ -144,10 +136,10 @@ export default function HeroSection({ data }: { data: InvitationData }) {
             transition={{ duration: 0.8, delay: 0.55 }}
             style={{
               ...goldText,
-              fontSize: "clamp(2rem, 9vw, 5rem)",
+              fontSize: "clamp(2rem, 9vw, 2rem)",
               lineHeight: 1.1,
             }}
-            className="relative z-20 text-center mb-20 md:mb-32"
+            className="relative z-20 text-center mb-10 md:mb-24"
           >
             {bride}
           </motion.p>
@@ -194,15 +186,14 @@ export default function HeroSection({ data }: { data: InvitationData }) {
             transition={{ duration: 0.8, delay: 0.65 }}
             style={{
               ...goldText,
-              fontSize: "clamp(1.6rem, 7.5vw, 4.2rem)",
+              fontSize: "clamp(2rem, 9vw, 2rem)",
               lineHeight: 1.1,
             }}
-            className="relative z-10 text-center"
+            className="relative z-10 text-center mt-4"
           >
             {groom}
           </motion.p>
         </div>
-
       </div>
 
       {/* ── Date & Venue ── */}

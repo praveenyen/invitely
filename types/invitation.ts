@@ -8,7 +8,9 @@ export interface Contact {
 export interface InvitationData {
   occasion: string;
   title: string;
-  hostNames: string;
+  brideName: string;
+  groomName: string;
+  cardImageUrl?: string;
   date: string;
   time: string;
   venue: string;

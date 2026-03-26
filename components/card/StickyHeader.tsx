@@ -30,7 +30,7 @@ export default function StickyHeader({ data }: { data: InvitationData }) {
         >
           <div>
             <p className="font-semibold text-sm text-[#2C1810] leading-tight" style={{ fontFamily: "var(--font-display)", fontStyle: "italic" }}>
-              {data.hostNames || data.title}
+              {[data.brideName, data.groomName].filter(Boolean).join(" & ") || data.title}
             </p>
           </div>
           <p className="text-[10px] tracking-[0.15em] text-[#7A5C3A] font-medium">

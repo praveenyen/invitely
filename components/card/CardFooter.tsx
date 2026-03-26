@@ -1,11 +1,16 @@
 "use client";
 import { motion } from "framer-motion";
 import { InvitationData } from "@/types/invitation";
+import Link from "next/link";
 
 function formatDate(dateStr: string) {
   if (!dateStr) return "";
   const d = new Date(dateStr + "T00:00:00");
-  return d.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+  return d.toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 export default function CardFooter({ data }: { data: InvitationData }) {
@@ -39,13 +44,14 @@ export default function CardFooter({ data }: { data: InvitationData }) {
           fontFamily: "var(--font-display)",
           fontStyle: "italic",
           fontSize: "1.6rem",
-          background: "linear-gradient(135deg, #7A5018 0%, #C8A030 50%, #7A5018 100%)",
+          background:
+            "linear-gradient(135deg, #7A5018 0%, #C8A030 50%, #7A5018 100%)",
           WebkitBackgroundClip: "text",
           WebkitTextFillColor: "transparent",
           backgroundClip: "text",
         }}
       >
-        {data.hostNames || data.title}
+        {[data.brideName, data.groomName].filter(Boolean).join(" & ") || data.title}
       </motion.p>
 
       <motion.p
@@ -75,7 +81,7 @@ export default function CardFooter({ data }: { data: InvitationData }) {
         transition={{ duration: 0.6, delay: 0.5 }}
         className="text-[10px] text-[#B8A090] tracking-widest uppercase mt-2"
       >
-        Made with Invitely ✦
+        Made with <Link href={"/"}>Invitely</Link> ✦
       </motion.p>
     </footer>
   );

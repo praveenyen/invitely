@@ -1,7 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { supabase } from "@/lib/supabase";
 import { INVITATION_STORAGE_KEY } from "@/types/invitation";
 import { saveInvitation } from "@/app/actions/invitation";
 import {
@@ -17,6 +19,8 @@ import {
   Clock,
   MessageSquare,
   Users,
+  ImagePlus,
+  X,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -43,7 +47,8 @@ interface Contact {
 interface FormData {
   occasion: OccasionType;
   title: string;
-  hostNames: string;
+  brideName: string;
+  groomName: string;
   date: string;
   time: string;
   venue: string;
@@ -78,6 +83,46 @@ const steps = [
   { label: "Culture", desc: "Select your tradition" },
   { label: "Contacts", desc: "Who's helping your guests?" },
 ];
+
+function getNameConfig(occasion: OccasionType) {
+  switch (occasion) {
+    case "wedding":
+      return {
+        label1: "Bride's Name",
+        placeholder1: "e.g. Priya",
+        label2: "Groom's Name",
+        placeholder2: "e.g. Rahul",
+      };
+    case "engagement":
+      return {
+        label1: "Her Name",
+        placeholder1: "e.g. Priya",
+        label2: "His Name",
+        placeholder2: "e.g. Rahul",
+      };
+    case "anniversary":
+      return {
+        label1: "Her Name",
+        placeholder1: "e.g. Priya",
+        label2: "His Name",
+        placeholder2: "e.g. Rahul",
+      };
+    case "birthday":
+      return {
+        label1: "Celebrant's Name",
+        placeholder1: "e.g. Priya",
+        label2: "Partner's Name",
+        placeholder2: "Optional",
+      };
+    default:
+      return {
+        label1: "Person 1 Name",
+        placeholder1: "",
+        label2: "Person 2 Name",
+        placeholder2: "Optional",
+      };
+  }
+}
 
 // ─── Step indicator ───────────────────────────────────────────────────────────
 
@@ -181,10 +226,19 @@ function StepOccasion({
 function StepDetails({
   data,
   onChange,
+  imagePreview,
+  onImageChange,
+  onImageClear,
 }: {
   data: FormData;
   onChange: (k: keyof FormData, v: string) => void;
+  imagePreview: string;
+  onImageChange: (file: File) => void;
+  onImageClear: () => void;
 }) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const nameConfig = getNameConfig(data.occasion);
+
   return (
     <div className="flex flex-col gap-4">
       <div>
@@ -205,14 +259,24 @@ function StepDetails({
           />
         </Field>
 
-        <Field label="Host Name(s)" icon={Users}>
-          <input
-            className={inputClass}
-            placeholder="e.g. The Sharma Family"
-            value={data.hostNames}
-            onChange={(e) => onChange("hostNames", e.target.value)}
-          />
-        </Field>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label={nameConfig.label1} icon={Users}>
+            <input
+              className={inputClass}
+              placeholder={nameConfig.placeholder1}
+              value={data.brideName}
+              onChange={(e) => onChange("brideName", e.target.value)}
+            />
+          </Field>
+          <Field label={nameConfig.label2} icon={User}>
+            <input
+              className={inputClass}
+              placeholder={nameConfig.placeholder2}
+              value={data.groomName}
+              onChange={(e) => onChange("groomName", e.target.value)}
+            />
+          </Field>
+        </div>
 
         <div className="grid grid-cols-2 gap-3">
           <Field label="Date" icon={Calendar}>
@@ -249,6 +313,49 @@ function StepDetails({
             placeholder="Write a heartfelt message for your guests…"
             value={data.message}
             onChange={(e) => onChange("message", e.target.value)}
+          />
+        </Field>
+
+        {/* ── Card image upload ── */}
+        <Field label="Custom Invitation Card (optional)" icon={ImagePlus}>
+          {imagePreview ? (
+            <div className="relative rounded-xl overflow-hidden border border-border">
+              <Image
+                src={imagePreview}
+                alt="Card preview"
+                width={400}
+                height={250}
+                className="w-full h-44 object-cover"
+              />
+              <button
+                onClick={onImageClear}
+                className="absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="flex flex-col items-center gap-2 rounded-xl border-2 border-dashed border-primary/30 bg-card py-6 text-center hover:border-primary/60 hover:bg-primary/3 transition-all"
+            >
+              <ImagePlus className="h-7 w-7 text-primary/50" />
+              <div>
+                <p className="text-sm font-medium text-foreground">Upload your card design</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">PNG, JPG or WEBP · Max 5 MB</p>
+              </div>
+            </button>
+          )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) onImageChange(file);
+            }}
           />
         </Field>
       </div>
@@ -421,10 +528,13 @@ export default function CreatePage() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [dir, setDir] = useState(1);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState("");
   const [form, setForm] = useState<FormData>({
     occasion: "",
     title: "",
-    hostNames: "",
+    brideName: "",
+    groomName: "",
     date: "",
     time: "",
     venue: "",
@@ -436,9 +546,21 @@ export default function CreatePage() {
   const updateField = (k: keyof FormData, v: string) =>
     setForm((f) => ({ ...f, [k]: v }));
 
+  const handleImageChange = (file: File) => {
+    setImageFile(file);
+    const reader = new FileReader();
+    reader.onload = (e) => setImagePreview(e.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const handleImageClear = () => {
+    setImageFile(null);
+    setImagePreview("");
+  };
+
   const canNext = () => {
     if (step === 0) return !!form.occasion;
-    if (step === 1) return !!form.title && !!form.date && !!form.venue;
+    if (step === 1) return !!form.title && !!form.brideName && !!form.date && !!form.venue;
     if (step === 2) return !!form.religion;
     return true;
   };
@@ -446,6 +568,43 @@ export default function CreatePage() {
   const go = (next: number) => {
     setDir(next > step ? 1 : -1);
     setStep(next);
+  };
+
+  const handleSubmit = async () => {
+    setSaving(true);
+    setSaveError("");
+
+    let cardImageUrl: string | undefined;
+
+    if (imageFile) {
+      const ext = imageFile.name.split(".").pop() ?? "jpg";
+      const path = `${crypto.randomUUID()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("invitation-cards")
+        .upload(path, imageFile, { contentType: imageFile.type, upsert: false });
+
+      if (uploadError) {
+        setSaveError(`Image upload failed: ${uploadError.message}`);
+        setSaving(false);
+        return;
+      }
+
+      const { data: urlData } = supabase.storage
+        .from("invitation-cards")
+        .getPublicUrl(path);
+      cardImageUrl = urlData.publicUrl;
+    }
+
+    const payload = { ...form, cardImageUrl };
+    localStorage.setItem(INVITATION_STORAGE_KEY, JSON.stringify(payload));
+    const result = await saveInvitation(payload);
+    setSaving(false);
+
+    if ("error" in result) {
+      setSaveError(result.error);
+    } else {
+      router.push(`/i/${result.slug}`);
+    }
   };
 
   return (
@@ -508,7 +667,13 @@ export default function CreatePage() {
               />
             )}
             {step === 1 && (
-              <StepDetails data={form} onChange={updateField} />
+              <StepDetails
+                data={form}
+                onChange={updateField}
+                imagePreview={imagePreview}
+                onImageChange={handleImageChange}
+                onImageClear={handleImageClear}
+              />
             )}
             {step === 2 && (
               <StepReligion
@@ -534,16 +699,7 @@ export default function CreatePage() {
             if (step < steps.length - 1) {
               go(step + 1);
             } else {
-              setSaving(true);
-              setSaveError("");
-              localStorage.setItem(INVITATION_STORAGE_KEY, JSON.stringify(form));
-              const result = await saveInvitation(form);
-              setSaving(false);
-              if ("error" in result) {
-                setSaveError(result.error);
-              } else {
-                router.push(`/i/${result.slug}`);
-              }
+              await handleSubmit();
             }
           }}
           className="w-full flex items-center justify-center gap-2 rounded-2xl py-4 font-medium text-primary-foreground gradient-gold shadow-card disabled:opacity-40 disabled:cursor-not-allowed transition-opacity hover:opacity-90 active:scale-[0.98]"

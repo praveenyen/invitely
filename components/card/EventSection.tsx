@@ -6,14 +6,20 @@ import { DiamondDivider, HeartVineDivider } from "./decorations/FloralDivider";
 function formatDate(dateStr: string) {
   if (!dateStr) return "";
   const d = new Date(dateStr + "T00:00:00");
-  return d.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+  return d.toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 function formatDateShort(dateStr: string) {
   if (!dateStr) return "";
   const d = new Date(dateStr + "T00:00:00");
   const day = d.getDate();
-  const suffix = ["th", "st", "nd", "rd"][(day % 100 > 10 && day % 100 < 14) ? 0 : [0,1,2,3][day % 10] ?? 0];
+  const suffix = ["th", "st", "nd", "rd"][
+    day % 100 > 10 && day % 100 < 14 ? 0 : ([0, 1, 2, 3][day % 10] ?? 0)
+  ];
   return `${d.toLocaleDateString("en-US", { month: "long" })} ${day}${suffix}`;
 }
 
@@ -42,37 +48,6 @@ const occasionEmoji: Record<string, string> = {
 export default function EventSection({ data }: { data: InvitationData }) {
   return (
     <section className="bg-[hsl(36_30%_95%)] py-10 px-5 flex flex-col items-center gap-6">
-      {/* Date highlight */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.7 }}
-        className="flex flex-col items-center gap-1"
-      >
-        <DiamondDivider className="w-40 mb-3" />
-        <p className="font-semibold text-lg text-[#2C1810] tracking-wide">
-          {formatDate(data.date)}
-        </p>
-        <p className="text-[11px] tracking-[0.2em] uppercase text-[#7A5C3A]">
-          {data.venue}
-        </p>
-        <DiamondDivider className="w-40 mt-3" />
-      </motion.div>
-
-      {/* Personal message */}
-      {data.message && (
-        <motion.p
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.7, delay: 0.1 }}
-          className="text-center text-sm text-[#5C4030] max-w-sm leading-relaxed"
-        >
-          {data.message}
-        </motion.p>
-      )}
-
       {/* Heart vine divider */}
       <motion.div
         initial={{ opacity: 0, scaleX: 0 }}
@@ -100,9 +75,26 @@ export default function EventSection({ data }: { data: InvitationData }) {
           <div className="absolute -top-6 -right-6 w-24 h-24 opacity-20 pointer-events-none">
             <svg viewBox="0 0 100 100" className="w-full h-full">
               {Array.from({ length: 8 }).map((_, i) => (
-                <ellipse key={i} cx="50" cy="20" rx="5" ry="30" fill="none" stroke="#B8932A" strokeWidth="0.8" transform={`rotate(${i * 45} 50 50)`} />
+                <ellipse
+                  key={i}
+                  cx="50"
+                  cy="20"
+                  rx="5"
+                  ry="30"
+                  fill="none"
+                  stroke="#B8932A"
+                  strokeWidth="0.8"
+                  transform={`rotate(${i * 45} 50 50)`}
+                />
               ))}
-              <circle cx="50" cy="50" r="48" fill="none" stroke="#B8932A" strokeWidth="0.5" />
+              <circle
+                cx="50"
+                cy="50"
+                r="48"
+                fill="none"
+                stroke="#B8932A"
+                strokeWidth="0.5"
+              />
             </svg>
           </div>
 
@@ -113,7 +105,8 @@ export default function EventSection({ data }: { data: InvitationData }) {
                 fontFamily: "var(--font-display)",
                 fontStyle: "italic",
                 fontSize: "1.4rem",
-                background: "linear-gradient(135deg, #7A5018 0%, #B8932A 50%, #7A5018 100%)",
+                background:
+                  "linear-gradient(135deg, #7A5018 0%, #B8932A 50%, #7A5018 100%)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 backgroundClip: "text",
@@ -124,13 +117,16 @@ export default function EventSection({ data }: { data: InvitationData }) {
 
             {/* Date + Time row */}
             <div className="flex items-center gap-2">
-              <span className="text-2xl">{occasionEmoji[data.occasion] ?? "✨"}</span>
+              <span className="text-2xl">
+                {occasionEmoji[data.occasion] ?? "✨"}
+              </span>
               <div>
                 <p className="font-semibold text-sm text-[#2C1810]">
                   {formatDateShort(data.date)}
                   {data.time && (
                     <span className="font-normal text-[#5C4030]">
-                      {" "}• {formatTime(data.time)}
+                      {" "}
+                      • {formatTime(data.time)}
                     </span>
                   )}
                 </p>
@@ -144,7 +140,7 @@ export default function EventSection({ data }: { data: InvitationData }) {
             <p className="text-sm text-[#5C4030]">{data.venue}</p>
 
             {/* Host */}
-            {data.hostNames && (
+            {([data.brideName, data.groomName].filter(Boolean).join(" & ")) && (
               <p
                 style={{
                   fontFamily: "var(--font-display)",
@@ -153,7 +149,7 @@ export default function EventSection({ data }: { data: InvitationData }) {
                   color: "#7A5C3A",
                 }}
               >
-                Hosted by {data.hostNames}
+                Hosted by {[data.brideName, data.groomName].filter(Boolean).join(" & ")}
               </p>
             )}
           </div>
