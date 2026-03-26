@@ -36,14 +36,22 @@ export async function generateMetadata({
     ? `${data.message} — ${dateVenue}`
     : `You're invited to ${title}. ${dateVenue}`;
 
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    (process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "http://localhost:3000");
+
   return {
     title: `${title} — Invitely`,
     description,
+    metadataBase: new URL(siteUrl),
     openGraph: {
       title,
       description,
       type: "website",
       siteName: "Invitely",
+      url: `${siteUrl}/i/${slug}`,
       ...(data.cardImageUrl && {
         images: [
           {
