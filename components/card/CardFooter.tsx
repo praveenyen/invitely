@@ -51,7 +51,8 @@ export default function CardFooter({ data }: { data: InvitationData }) {
           backgroundClip: "text",
         }}
       >
-        {[data.brideName, data.groomName].filter(Boolean).join(" & ") || data.title}
+        {[data.brideName, data.groomName].filter(Boolean).join(" & ") ||
+          data.title}
       </motion.p>
 
       <motion.p
@@ -59,7 +60,7 @@ export default function CardFooter({ data }: { data: InvitationData }) {
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
         transition={{ duration: 0.6, delay: 0.3 }}
-        className="text-xs text-[#7A5C3A] tracking-wide"
+        className="text-xs text-[#7A5C3A] tracking-wide text-center"
       >
         {formatDate(data.date)} • {data.venue}
       </motion.p>

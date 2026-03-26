@@ -86,6 +86,30 @@ export default function HeroSection({ data }: { data: InvitationData }) {
         <RoseDivider className="w-full" />
       </motion.div>
 
+      {/* ── Invitation title ── */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7, delay: 0.5 }}
+        className="z-10 mt-2 px-5 py-2 rounded-full border border-[#B8932A]/40 bg-gradient-to-r from-[#B8932A]/10 via-[#f3d38a]/20 to-[#B8932A]/10 backdrop-blur-sm"
+      >
+        <p
+          style={{
+            fontFamily: "var(--font-display)",
+            fontStyle: "italic",
+            fontSize: "clamp(1rem, 4vw, 1.25rem)",
+            background:
+              "linear-gradient(135deg, #7A5018 0%, #C8A030 45%, #D4A820 55%, #7A5018 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+            letterSpacing: "0.02em",
+          }}
+        >
+          {data.title}
+        </p>
+      </motion.div>
+
       {/* ── Main center: Names+Hands with Bride & Groom flanking ── */}
       <div className="relative flex-1 flex items-center justify-center w-full z-10">
         {/* Center: mandala bg + stacked names + hands */}
@@ -139,7 +163,7 @@ export default function HeroSection({ data }: { data: InvitationData }) {
               fontSize: "clamp(2rem, 9vw, 2rem)",
               lineHeight: 1.1,
             }}
-            className="relative z-20 text-center mb-10 md:mb-24"
+            className="relative z-20 text-center mb-10 md:mb-24 lg:text-6xl!"
           >
             {bride}
           </motion.p>
@@ -189,7 +213,7 @@ export default function HeroSection({ data }: { data: InvitationData }) {
               fontSize: "clamp(2rem, 9vw, 2rem)",
               lineHeight: 1.1,
             }}
-            className="relative z-10 text-center mt-4"
+            className="relative z-10 text-center mt-4 lg:mt-20 lg:text-6xl!"
           >
             {groom}
           </motion.p>
@@ -207,7 +231,7 @@ export default function HeroSection({ data }: { data: InvitationData }) {
         <p className="font-semibold text-base text-[#2C1810] tracking-wide">
           {formatDate(data.date)}
         </p>
-        <p className="text-[11px] tracking-[0.2em] uppercase text-[#7A5C3A]">
+        <p className="text-[11px] tracking-[0.2em] uppercase text-[#7A5C3A] px-6 text-center">
           {data.venue}
         </p>
         <DiamondDivider className="w-40 mt-2" />
