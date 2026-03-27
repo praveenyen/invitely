@@ -7,6 +7,8 @@ import { supabase } from "@/lib/supabase";
 import { INVITATION_STORAGE_KEY } from "@/types/invitation";
 import { saveInvitation } from "@/app/actions/invitation";
 import { useAuthStore } from "@/store/auth";
+import { ALL_THEMES } from "@/lib/themes";
+import type { TemplateId, ThemeId } from "@/types/invitation";
 import {
   ArrowLeft,
   ArrowRight,
@@ -56,6 +58,8 @@ interface FormData {
   message: string;
   religion: ReligionType;
   contacts: Contact[];
+  templateId: TemplateId;
+  themeId: ThemeId;
   pin: string;
 }
 
@@ -84,8 +88,92 @@ const steps = [
   { label: "Details", desc: "Tell us about the event" },
   { label: "Culture", desc: "Select your tradition" },
   { label: "Contacts", desc: "Who's helping your guests?" },
+  { label: "Design", desc: "Pick your template & theme" },
   { label: "Secure", desc: "Set a PIN to manage your invite" },
 ];
+
+const TEMPLATE_OPTIONS: { id: TemplateId; label: string; desc: string; emoji: string }[] = [
+  { id: "classic", label: "Classic", desc: "Floral mandala with ornate decorations", emoji: "🌸" },
+  { id: "modern", label: "Modern", desc: "Clean typographic layout", emoji: "✦" },
+  { id: "royal", label: "Royal", desc: "Dark ornate with filigree details", emoji: "👑" },
+];
+
+function StepDesign({
+  templateId,
+  themeId,
+  onTemplate,
+  onTheme,
+}: {
+  templateId: TemplateId;
+  themeId: ThemeId;
+  onTemplate: (v: TemplateId) => void;
+  onTheme: (v: ThemeId) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-6">
+      <div>
+        <h2 className="font-display text-2xl font-bold text-foreground">Design your invite</h2>
+        <p className="text-muted-foreground text-sm mt-1">Choose a template and colour theme</p>
+      </div>
+
+      {/* Template picker */}
+      <div className="flex flex-col gap-2">
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Template</p>
+        <div className="flex flex-col gap-2">
+          {TEMPLATE_OPTIONS.map((t) => {
+            const selected = templateId === t.id;
+            return (
+              <button
+                key={t.id}
+                onClick={() => onTemplate(t.id)}
+                className={`flex items-center gap-4 rounded-2xl border-2 px-4 py-3 text-left transition-all duration-200 ${
+                  selected ? "border-primary bg-primary/8" : "border-border bg-card hover:border-primary/40"
+                }`}
+              >
+                <span className="text-2xl w-8 text-center">{t.emoji}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground">{t.label}</p>
+                  <p className="text-xs text-muted-foreground">{t.desc}</p>
+                </div>
+                {selected && <Check className="h-4 w-4 text-primary shrink-0" />}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Theme picker */}
+      <div className="flex flex-col gap-2">
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Colour Theme</p>
+        <div className="flex flex-wrap gap-2">
+          {ALL_THEMES.map((t) => {
+            const selected = themeId === t.id;
+            return (
+              <button
+                key={t.id}
+                onClick={() => onTheme(t.id as ThemeId)}
+                className={`flex items-center gap-2 rounded-full px-3 py-1.5 border-2 text-xs font-medium transition-all duration-200 ${
+                  selected ? "border-primary" : "border-border bg-card hover:border-primary/40"
+                }`}
+                style={{
+                  background: selected ? t.preview.bg : undefined,
+                  color: selected ? t.preview.text : undefined,
+                }}
+              >
+                <span
+                  className="w-3 h-3 rounded-full shrink-0"
+                  style={{ background: t.preview.accent }}
+                />
+                {t.label}
+                {selected && <Check className="h-3 w-3 shrink-0" />}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function getNameConfig(occasion: OccasionType) {
   switch (occasion) {
@@ -571,7 +659,7 @@ export default function CreatePage() {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   // Skip the PIN step for logged-in users
-  const activeSteps = user ? steps.slice(0, 4) : steps;
+  const activeSteps = user ? steps.slice(0, 5) : steps;
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
@@ -589,6 +677,8 @@ export default function CreatePage() {
     message: "",
     religion: "",
     contacts: [],
+    templateId: "classic",
+    themeId: "golden-dawn",
     pin: "",
   });
 
@@ -611,7 +701,9 @@ export default function CreatePage() {
     if (step === 0) return !!form.occasion;
     if (step === 1) return !!form.title && !!form.brideName && !!form.date && !!form.venue;
     if (step === 2) return !!form.religion;
-    if (step === 4) return /^\d{4}$/.test(form.pin);
+    // step 4 = Design → always valid (defaults pre-selected)
+    const pinStep = user ? 4 : 5;
+    if (step === pinStep) return /^\d{4}$/.test(form.pin);
     return true;
   };
 
@@ -656,6 +748,8 @@ export default function CreatePage() {
       message: form.message,
       religion: form.religion,
       contacts: form.contacts,
+      templateId: form.templateId,
+      themeId: form.themeId,
       cardImageUrl,
     };
     localStorage.setItem(INVITATION_STORAGE_KEY, JSON.stringify(payload));
@@ -750,6 +844,14 @@ export default function CreatePage() {
               />
             )}
             {step === 4 && (
+              <StepDesign
+                templateId={form.templateId}
+                themeId={form.themeId}
+                onTemplate={(v) => setForm((f) => ({ ...f, templateId: v }))}
+                onTheme={(v) => setForm((f) => ({ ...f, themeId: v }))}
+              />
+            )}
+            {step === 5 && (
               <StepPin
                 value={form.pin}
                 onChange={(v) => updateField("pin", v)}

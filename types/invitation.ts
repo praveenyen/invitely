@@ -1,3 +1,12 @@
+export type TemplateId = "classic" | "modern" | "royal";
+export type ThemeId =
+  | "golden-dawn"
+  | "midnight-rose"
+  | "emerald-garden"
+  | "blush-pink"
+  | "ocean-blue"
+  | "noir";
+
 export interface Contact {
   id: string;
   name: string;
@@ -17,6 +26,8 @@ export interface InvitationData {
   message: string;
   religion: string;
   contacts: Contact[];
+  templateId?: TemplateId;
+  themeId?: ThemeId;
 }
 
 export const INVITATION_STORAGE_KEY = "invitely_data";

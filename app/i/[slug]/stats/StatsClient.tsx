@@ -15,7 +15,8 @@ import {
   Check,
 } from "lucide-react";
 import { verifyPin, updateInvitation, attachInvitationToPhone } from "@/app/actions/invitation";
-import { InvitationData, Contact } from "@/types/invitation";
+import { InvitationData, Contact, TemplateId, ThemeId } from "@/types/invitation";
+import { ALL_THEMES } from "@/lib/themes";
 
 // ─── Shared data ──────────────────────────────────────────────────────────────
 
@@ -545,6 +546,69 @@ export default function StatsClient({
                 <Plus className="h-4 w-4" />
                 Add contact
               </button>
+            </div>
+          </Field>
+
+          {/* Template */}
+          <Field label="Template">
+            <div className="flex flex-col gap-2">
+              {(
+                [
+                  { id: "classic", label: "Classic", desc: "Floral mandala & ornate decorations", emoji: "🌸" },
+                  { id: "modern", label: "Modern", desc: "Clean typographic layout", emoji: "✦" },
+                  { id: "royal", label: "Royal", desc: "Dark ornate with filigree details", emoji: "👑" },
+                ] as { id: TemplateId; label: string; desc: string; emoji: string }[]
+              ).map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, templateId: t.id }))}
+                  className={`flex items-center gap-3 rounded-xl border-2 px-3 py-2.5 text-sm text-left transition-all ${
+                    form.templateId === t.id
+                      ? "border-primary bg-primary/8 text-foreground"
+                      : "border-border bg-card text-muted-foreground hover:border-primary/40"
+                  }`}
+                >
+                  <span className="text-lg w-6 text-center">{t.emoji}</span>
+                  <div className="flex-1 min-w-0">
+                    <span className="font-medium text-foreground">{t.label}</span>
+                    <span className="text-xs text-muted-foreground ml-2">{t.desc}</span>
+                  </div>
+                  {form.templateId === t.id && (
+                    <Check className="h-3.5 w-3.5 text-primary shrink-0" />
+                  )}
+                </button>
+              ))}
+            </div>
+          </Field>
+
+          {/* Theme */}
+          <Field label="Colour Theme">
+            <div className="flex flex-wrap gap-2">
+              {ALL_THEMES.map((t) => {
+                const selected = form.themeId === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setForm((f) => ({ ...f, themeId: t.id as ThemeId }))}
+                    className={`flex items-center gap-2 rounded-full px-3 py-1.5 border-2 text-xs font-medium transition-all ${
+                      selected ? "border-primary" : "border-border bg-card hover:border-primary/40"
+                    }`}
+                    style={{
+                      background: selected ? t.preview.bg : undefined,
+                      color: selected ? t.preview.text : undefined,
+                    }}
+                  >
+                    <span
+                      className="w-3 h-3 rounded-full shrink-0"
+                      style={{ background: t.preview.accent }}
+                    />
+                    {t.label}
+                    {selected && <Check className="h-3 w-3 shrink-0" />}
+                  </button>
+                );
+              })}
             </div>
           </Field>
 

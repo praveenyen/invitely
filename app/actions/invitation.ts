@@ -32,6 +32,8 @@ export async function saveInvitation(
     contacts: data.contacts,
     pin: actualPin,
     user_phone: userPhone ?? null,
+    template_id: data.templateId ?? "classic",
+    theme_id: data.themeId ?? "golden-dawn",
   });
 
   if (error) return { error: error.message };
@@ -41,7 +43,7 @@ export async function saveInvitation(
 export async function getInvitation(slug: string): Promise<InvitationData | null> {
   const { data, error } = await supabase
     .from("invitations")
-    .select("occasion,title,bride_name,groom_name,card_image_url,date,time,venue,message,religion,contacts")
+    .select("occasion,title,bride_name,groom_name,card_image_url,date,time,venue,message,religion,contacts,template_id,theme_id")
     .eq("slug", slug)
     .single();
 
@@ -59,6 +61,8 @@ export async function getInvitation(slug: string): Promise<InvitationData | null
     message: data.message,
     religion: data.religion,
     contacts: data.contacts ?? [],
+    templateId: (data.template_id ?? "classic") as import("@/types/invitation").TemplateId,
+    themeId: (data.theme_id ?? "golden-dawn") as import("@/types/invitation").ThemeId,
   };
 }
 
@@ -89,6 +93,8 @@ export async function getInvitationStats(slug: string): Promise<{
       message: data.message,
       religion: data.religion,
       contacts: data.contacts ?? [],
+      templateId: (data.template_id ?? "classic") as import("@/types/invitation").TemplateId,
+      themeId: (data.theme_id ?? "golden-dawn") as import("@/types/invitation").ThemeId,
     },
     viewCount: data.view_count ?? 0,
     userPhone: data.user_phone ?? null,
@@ -181,6 +187,8 @@ export async function updateInvitation(
       message: updates.message,
       religion: updates.religion,
       contacts: updates.contacts,
+      ...(updates.templateId && { template_id: updates.templateId }),
+      ...(updates.themeId && { theme_id: updates.themeId }),
     })
     .eq("slug", slug);
 

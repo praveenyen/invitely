@@ -1,5 +1,12 @@
 import type { Metadata } from "next";
 import { DM_Sans, DM_Serif_Display } from "next/font/google";
+import {
+  playfairDisplay,
+  cormorantGaramond,
+  lora,
+  greatVibes,
+  cinzel,
+} from "@/lib/fonts";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -52,7 +59,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${dmSans.variable} ${dmSerifDisplay.variable} antialiased`}
+      className={`${dmSans.variable} ${dmSerifDisplay.variable} ${playfairDisplay.variable} ${cormorantGaramond.variable} ${lora.variable} ${greatVibes.variable} ${cinzel.variable} antialiased`}
     >
       <body className="min-h-full">{children}</body>
     </html>
