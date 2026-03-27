@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -14,7 +14,7 @@ import {
   User,
   Check,
 } from "lucide-react";
-import { verifyPin, updateInvitation } from "@/app/actions/invitation";
+import { verifyPin, updateInvitation, attachInvitationToPhone } from "@/app/actions/invitation";
 import { InvitationData, Contact } from "@/types/invitation";
 
 // ─── Shared data ──────────────────────────────────────────────────────────────
@@ -206,26 +206,38 @@ export default function StatsClient({
   slug,
   data,
   viewCount,
+  autoUnlocked = false,
+  serverPin,
 }: {
   slug: string;
   data: InvitationData;
   viewCount: number;
+  autoUnlocked?: boolean;
+  serverPin?: string;
 }) {
-  const [phase, setPhase] = useState<"pin" | "stats">("pin");
-  const [verifiedPin, setVerifiedPin] = useState("");
+  const [phase, setPhase] = useState<"pin" | "stats">(() => {
+    if (autoUnlocked) return "stats";
+    if (typeof window !== "undefined" && sessionStorage.getItem(`stats_${slug}`) === "1")
+      return "stats";
+    return "pin";
+  });
+  const [verifiedPin, setVerifiedPin] = useState<string>(() => {
+    if (autoUnlocked && serverPin) return serverPin;
+    if (typeof window !== "undefined") return sessionStorage.getItem(`pin_${slug}`) ?? "";
+    return "";
+  });
   const [form, setForm] = useState<InvitationData>({ ...data });
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState<{
     type: "success" | "error";
     text: string;
   } | null>(null);
-
-  useEffect(() => {
-    if (sessionStorage.getItem(`stats_${slug}`) === "1") {
-      setVerifiedPin(sessionStorage.getItem(`pin_${slug}`) ?? "");
-      setPhase("stats");
-    }
-  }, [slug]);
+  const [attachMobile, setAttachMobile] = useState("");
+  const [attaching, setAttaching] = useState(false);
+  const [attachMsg, setAttachMsg] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   const handleUnlock = (pin: string) => {
     sessionStorage.setItem(`stats_${slug}`, "1");
@@ -580,6 +592,61 @@ export default function StatsClient({
             >
               View Invitation <ExternalLink className="h-3.5 w-3.5" />
             </Link>
+          </div>
+
+          {/* Link to account */}
+          <div className="flex flex-col gap-4 pt-2 pb-4 border-t border-border">
+            <div>
+              <p className="text-sm font-semibold text-foreground">
+                Link to your account
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Enter your mobile number to view this invitation in your dashboard
+              </p>
+            </div>
+            <div className="flex rounded-xl border border-border bg-card overflow-hidden focus-within:ring-2 focus-within:ring-primary/30 transition-all">
+              <div className="flex items-center gap-1.5 px-3 border-r border-border bg-muted">
+                <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-sm font-medium text-muted-foreground">+91</span>
+              </div>
+              <input
+                type="tel"
+                maxLength={10}
+                placeholder="98765 43210"
+                value={attachMobile}
+                onChange={(e) =>
+                  setAttachMobile(e.target.value.replace(/\D/g, "").slice(0, 10))
+                }
+                className="flex-1 px-3 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none bg-transparent"
+              />
+            </div>
+            <button
+              onClick={async () => {
+                setAttaching(true);
+                setAttachMsg(null);
+                const result = await attachInvitationToPhone(slug, verifiedPin, attachMobile);
+                setAttaching(false);
+                if ("error" in result) {
+                  setAttachMsg({ type: "error", text: result.error });
+                } else {
+                  setAttachMsg({ type: "success", text: "Linked! Visit your dashboard to see it." });
+                  setAttachMobile("");
+                }
+              }}
+              disabled={attachMobile.length !== 10 || attaching}
+              className="flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-medium text-primary-foreground gradient-gold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+            >
+              {attaching ? (
+                <div className="h-4 w-4 rounded-full border-2 border-primary-foreground border-t-transparent animate-spin" />
+              ) : (
+                "Link to Account"
+              )}
+            </button>
+            {attachMsg && (
+              <p className={`text-xs text-center ${attachMsg.type === "success" ? "text-green-600" : "text-destructive"}`}>
+                {attachMsg.text}
+              </p>
+            )}
           </div>
         </motion.div>
       </div>

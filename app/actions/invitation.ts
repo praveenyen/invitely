@@ -6,10 +6,16 @@ import { generateSlug } from "@/lib/slug";
 
 export async function saveInvitation(
   data: InvitationData,
-  pin: string
+  pin: string,
+  userPhone?: string
 ): Promise<{ slug: string } | { error: string }> {
   const names = [data.brideName, data.groomName].filter(Boolean).join(" ");
   const slug = generateSlug(data.title, names);
+
+  // For logged-in users, generate a random PIN so the field is never empty
+  const actualPin = userPhone
+    ? String(Math.floor(1000 + Math.random() * 9000))
+    : pin;
 
   const { error } = await supabase.from("invitations").insert({
     slug,
@@ -24,7 +30,8 @@ export async function saveInvitation(
     message: data.message,
     religion: data.religion,
     contacts: data.contacts,
-    pin,
+    pin: actualPin,
+    user_phone: userPhone ?? null,
   });
 
   if (error) return { error: error.message };
@@ -58,6 +65,8 @@ export async function getInvitation(slug: string): Promise<InvitationData | null
 export async function getInvitationStats(slug: string): Promise<{
   data: InvitationData;
   viewCount: number;
+  userPhone: string | null;
+  pin: string;
 } | null> {
   const { data, error } = await supabase
     .from("invitations")
@@ -82,7 +91,39 @@ export async function getInvitationStats(slug: string): Promise<{
       contacts: data.contacts ?? [],
     },
     viewCount: data.view_count ?? 0,
+    userPhone: data.user_phone ?? null,
+    pin: data.pin ?? "",
   };
+}
+
+export async function getInvitationsByPhone(phone: string): Promise<
+  Array<{
+    slug: string;
+    title: string;
+    brideName: string;
+    groomName: string;
+    occasion: string;
+    date: string;
+    viewCount: number;
+  }>
+> {
+  const { data, error } = await supabase
+    .from("invitations")
+    .select("slug,title,bride_name,groom_name,occasion,date,view_count")
+    .eq("user_phone", phone)
+    .order("created_at", { ascending: false });
+
+  if (error || !data) return [];
+
+  return data.map((d) => ({
+    slug: d.slug,
+    title: d.title ?? "",
+    brideName: d.bride_name ?? "",
+    groomName: d.groom_name ?? "",
+    occasion: d.occasion ?? "",
+    date: d.date ?? "",
+    viewCount: d.view_count ?? 0,
+  }));
 }
 
 export async function verifyPin(slug: string, pin: string): Promise<boolean> {
@@ -97,6 +138,26 @@ export async function verifyPin(slug: string, pin: string): Promise<boolean> {
 
 export async function incrementViewCount(slug: string): Promise<void> {
   await supabase.rpc("increment_view_count", { slug_param: slug });
+}
+
+export async function attachInvitationToPhone(
+  slug: string,
+  pin: string,
+  mobile: string
+): Promise<{ success: boolean } | { error: string }> {
+  const valid = await verifyPin(slug, pin);
+  if (!valid) return { error: "Invalid PIN" };
+
+  const phone = mobile.replace(/\D/g, "");
+  if (phone.length !== 10) return { error: "Enter a valid 10-digit mobile number" };
+
+  const { error } = await supabase
+    .from("invitations")
+    .update({ user_phone: phone })
+    .eq("slug", slug);
+
+  if (error) return { error: error.message };
+  return { success: true };
 }
 
 export async function updateInvitation(

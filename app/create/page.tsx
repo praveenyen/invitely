@@ -6,6 +6,7 @@ import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { INVITATION_STORAGE_KEY } from "@/types/invitation";
 import { saveInvitation } from "@/app/actions/invitation";
+import { useAuthStore } from "@/store/auth";
 import {
   ArrowLeft,
   ArrowRight,
@@ -568,6 +569,9 @@ const slideVariants = {
 
 export default function CreatePage() {
   const router = useRouter();
+  const user = useAuthStore((s) => s.user);
+  // Skip the PIN step for logged-in users
+  const activeSteps = user ? steps.slice(0, 4) : steps;
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
@@ -655,7 +659,7 @@ export default function CreatePage() {
       cardImageUrl,
     };
     localStorage.setItem(INVITATION_STORAGE_KEY, JSON.stringify(payload));
-    const result = await saveInvitation(payload, form.pin);
+    const result = await saveInvitation(payload, form.pin, user?.mobile);
     setSaving(false);
 
     if ("error" in result) {
@@ -677,20 +681,20 @@ export default function CreatePage() {
         </button>
         <div>
           <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">
-            Step {step + 1} of {steps.length}
+            Step {step + 1} of {activeSteps.length}
           </p>
           <p className="text-xs text-foreground font-medium">
-            {steps[step].desc}
+            {activeSteps[step].desc}
           </p>
         </div>
       </header>
 
       {/* Progress */}
-      <StepBar current={step} total={steps.length} />
+      <StepBar current={step} total={activeSteps.length} />
 
       {/* Step tab labels */}
       <div className="flex px-5 gap-1 overflow-x-auto no-scrollbar pb-2">
-        {steps.map((s, i) => (
+        {activeSteps.map((s, i) => (
           <span
             key={s.label}
             className={`text-[11px] font-medium px-3 py-1 rounded-full whitespace-nowrap transition-all ${
@@ -760,7 +764,7 @@ export default function CreatePage() {
         <button
           disabled={!canNext() || saving}
           onClick={async () => {
-            if (step < steps.length - 1) {
+            if (step < activeSteps.length - 1) {
               go(step + 1);
             } else {
               await handleSubmit();
@@ -773,7 +777,7 @@ export default function CreatePage() {
               <div className="h-4 w-4 rounded-full border-2 border-primary-foreground border-t-transparent animate-spin" />
               Creating…
             </>
-          ) : step < steps.length - 1 ? (
+          ) : step < activeSteps.length - 1 ? (
             <>
               Continue
               <ArrowRight className="h-4 w-4" />
