@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Sparkles, Share2, Smartphone } from "lucide-react";
 import Button from "@/components/ui/Button";
+import Link from "next/link";
 
 const features = [
   {
@@ -32,6 +33,11 @@ export default function Index() {
         <h1 className="font-display text-xl font-bold text-foreground">
           Invitely <span className="text-primary">✦</span>
         </h1>
+
+        {/* Signin */}
+        <Link href="/signin" className="text-primary! px-4 py-2">
+          Signin
+        </Link>
       </header>
 
       {/* Hero */}
